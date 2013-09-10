@@ -33,260 +33,137 @@ This plugin is for use with [Cordova](http://incubator.apache.org/cordova/), and
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE.
 
-## Manual Installation for Android
-
-
-1) copy the contents of **src/android/com/** to your project's **src/com/** folder. 
-   copy the contents of **libs/** to your **libs/** folder.
-   The final hirearchy will likely look something like this;
-
-	{project_folder}
-		libs
-			gcm.jar
-			android-support-v13.jar
-			cordova-2.7.0.jar
-		src
-			com
-				plugin
-					gcm
-						CordovaGCMBroadcastReceiver.java
-						GCMIntentService.java
-						PushHandlerActivity.java
-						PushPlugin.java						
-				{company_name}
-					{intent_name}
-						{intent_name}.java						
-
-2) Modify your **AndroidManifest.xml** and add the following lines to your manifest tag:
-
-			<uses-permission android:name="android.permission.GET_TASKS" />
-			<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-			<uses-permission android:name="android.permission.GET_ACCOUNTS" />
-			<uses-permission android:name="android.permission.WAKE_LOCK" />
-			<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-			<permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" android:protectionLevel="signature" />
-			<uses-permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" />
-
-
-3) Modify your **AndroidManifest.xml** and add the following **activity**, **receiver** and **service** tags to your **application** section. (See the Sample_AndroidManifest.xml file in the Example folder.)
-
-			<activity android:name="com.plugin.gcm.PushHandlerActivity"/>
-			<receiver android:name="com.plugin.gcm.CordovaGCMBroadcastReceiver" android:permission="com.google.android.c2dm.permission.SEND" >
-				<intent-filter>
-					<action android:name="com.google.android.c2dm.intent.RECEIVE" />
-					<action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-					<category android:name="$PACKAGE_NAME" />
-				</intent-filter>
-			</receiver>
-			<service android:name="com.plugin.gcm.GCMIntentService" />
-
-4) Modify your **res/xml/config.xml** to include the following line in order to tell Cordova to include this plugin and where it can be found: (See the Sample_config.xml file in the Example folder)
-
-	<plugin name="PushPlugin" value="com.plugin.gcm.PushPlugin" />
-
-5) Add the **PushNotification.js** script to your assets/www folder (or javascripts folder, wherever you want really) and reference it in your main index.html file. This file's usage is described in the **Plugin API** section below.
-
-    <script type="text/javascript" charset="utf-8" src="PushNotification.js"></script>
-
-## Manual Installation for iOS
-
-Copy the following files to your project's Plugins folder:
-
-	AppDelegate+notification.h
-	AppDelegate+notification.m
-	PushPlugin.h
-	PushPlugin.m
-	
-Add a reference for this plugin to the plugins section in **config.xml**:
-
-	<plugin name="PushPlugin" value="PushPlugin" />
-
-
-Add the **PushNotification.js** script to your assets/www folder (or javascripts folder, wherever you want really) and reference it in your main index.html file.
-
-    <script type="text/javascript" charset="utf-8" src="PushNotification.js"></script>
-
-## Automatic Installation
-This plugin is based on [plugman](https://github.com/apache/cordova-plugman). to install it to your app,
-simply execute plugman as follows;
-
-	plugman --platform [PLATFORM] --project [TARGET-PATH] --plugin [PLUGIN-PATH]
-	
-	where
-		[PLATFORM] = ios or android
-		[TARGET-PATH] = path to folder containing your phonegap project
-		[PLUGIN-PATH] = path to folder containing this plugin
-
-For additional info, take a look at the [Plugman Documentation](https://github.com/apache/cordova-plugman/blob/master/README.md)
+## Installation
+	cordova plugin add git@github.com:Lemonsplat/PushPlugin.git
 
 ## Plugin API
 
-In the Examples folder you will find a sample implementation showing how to interact with the PushPlugin. Modify it to suit your needs.
+Plugin can be accessed via:
 
-First create the plugin instance variable.
-
-	var pushNotification;
+	navigator.pushNotification
 	
-When deviceReady fires, get the plugin reference
+### Allowed methods:
+#### register(successCallback, errorCallback, options)
+This should be called as soon as the device becomes ready. On success, you will get a call to successCallback (iOS), or ecb method (Android), allowing you to obtain the device token or registration ID, respectively. Those values will typically get posted to your intermediary push server so it knows who it can send notifications to. 
 
-	pushNotification = window.plugins.pushNotification;
-	
-#### register
-This should be called as soon as the device becomes ready. On success, you will get a call to tokenHandler (iOS), or  onNotificationGCM (Android), allowing you to obtain the device token or registration ID, respectively. Those values will typically get posted to your intermediary push server so it knows who it can send notifications to.
+For Android, If you have not already done so, you'll need to set up a Google API project, to generate your senderID. Follow these steps to do so. This is described more fully in the Test Environment section below.
 
+In this example, be sure and substitute your own senderID. Get your senderID by signing into to your google dashboard. The senderID is found at Overview->Dashboard->Project Number.
 
-For Android, If you have not already done so, you'll need to set up a Google API project, to generate your senderID. [Follow these steps](http://developer.android.com/guide/google/gcm/gs.html) to do so. This is described more fully in the **Test Environment** section below.
-
-In this example, be sure and substitute your own senderID. Get your senderID by signing into to your [google dashboard](https://code.google.com/apis/console/). The senderID is found at **Overview->Dashboard->Project Number**.
-
-	if (device.platform == 'android' || device.platform == 'Android') {
-		pushNotification.register(successHandler, errorHandler,{"senderID":"replace_with_sender_id","ecb":"onNotificationGCM"});
-	} else {
-		pushNotification.register(tokenHandler, errorHandler {"badge":"true","sound":"true","alert":"true","ecb":"onNotificationAPN"});
+##### successCallback
+	function(result) {
+		console.log(result);
 	}
-
-**successHandler** - called when a plugin method returns without error
-
-	// result contains any message sent from the plugin call
-	function successHandler (result) {
-		alert('result = '+result)
+##### errorCallback
+	function(error) {
+		console.log(error);
 	}
-	
-**errorHandler** - called when the plugin returns an error
+##### options
+###### Android
 
-	// result contains any error description text returned from the plugin call
-	function errorHandler (error) {
-		alert('error = '+error)
-	}
-	
-**tokenHandler (iOS ony)** - called when the device has registeredwith a unique device token.
-
-	function tokenHandler (result) {
-		// Your iOS push server needs to know the token before it can push to this device
-		// here is where you might want to send it the token for later use.
-		alert('device token = '+result)
-	}
-
-**senderID (Android only)** - This is the Google project ID you need to obtain by [registering your application](http://developer.android.com/guide/google/gcm/gs.html) for GCM
-
-**ecb** - event callback that gets called when your device receives a notification
-	
-	// iOS
-	function onNotificationAPN(event) {
-		if (event.alert) {
-			navigator.notification.alert(event.alert);
+		senderID - Project Number from [google dashboard](https://code.google.com/apis/console/)
+		ecb - name of action that should be called when some action is done (for example message comes)
+		
+Example:
+		
+		
+		navigator.pushNotification.register(function(result) { 
+			console.log(result); 
+		}, function(error) {
+			console.log(error);
+		}, 
+		{
+			"senderID":"your sender id", 
+			"ecb":"androidECB"
+		});
+		
+		function androidECB(response) {
+			switch(response.event) {
+				case "registered":
+					console.log("regid = " + response.regid);
+					break;
+				case "message":
+					console.log("foreground = " + response.foreground);
+					console.log("message = " + response.message);
+					break;
+				case "error":
+					console.log("message = " + response.message);
+					break;
+				default:
+					console.log(response);
+			}
 		}
+
+###### IOS
+		badge - if there should be a badge
+		sound - if sound should be played
+		alert - if alert should be showed
+		ecb - name of action that should be called when some action is done (for example message comes)
+
+Example:
+
+		navigator.pushNotification.register(function(result) { 
+			console.log(result); 
+		}, function(error) {
+			console.log(error);
+		}, 
+		{
+			"badge":true/false,
+			"sound":true/false,
+			"alert":true/false,
+			"ecb":"iosECB"
+		});
+		
+		function iosECB(event) {
+			if (event.alert) {
+				navigator.notification.alert(event.alert);
+			}
 	  
-		if (event.sound) {
-			var snd = new Media(event.sound);
-			snd.play();
+			if (event.sound) {
+				var snd = new Media(event.sound);
+				snd.play();
+			}
+		  
+			if (event.badge) {
+				pushNotification.setApplicationIconBadgeNumber(function() {}, function() {}, event.badge);
+			}
 		}
-	  
-		if (event.badge) {
-			pushNotification.setApplicationIconBadgeNumber(successHandler, errorHandler, event.badge);
-		}
-	}
-
-
-	// Android
-            function onNotificationGCM(e) {
-                $("#app-status-ul").append('<li>EVENT -> RECEIVED:' + e.event + '</li>');
-                
-                switch( e.event )
-                {
-                    case 'registered':
-					if ( e.regid.length > 0 )
-					{
-						$("#app-status-ul").append('<li>REGISTERED -> REGID:' + e.regid + "</li>");
-						// Your GCM push server needs to know the regID before it can push to this device
-						// here is where you might want to send it the regID for later use.
-						console.log("regID = " + e.regID);
-					}
-                    break;
-                    
-                    case 'message':
-                    	// if this flag is set, this notification happened while we were in the foreground.
-                    	// you might want to play a sound to get the user's attention, throw up a dialog, etc.
-                    	if (e.foreground)
-                    	{
-							$("#app-status-ul").append('<li>--INLINE NOTIFICATION--' + '</li>');
-							
-							// if the notification contains a soundname, play it.
-							var my_media = new Media("/android_asset/www/"+e.soundname);
-							my_media.play();
-						}
-						else
-						{	// otherwise we were launched because the user touched a notification in the notification tray.
-							if (e.coldstart)
-								$("#app-status-ul").append('<li>--COLDSTART NOTIFICATION--' + '</li>');
-							else
-							$("#app-status-ul").append('<li>--BACKGROUND NOTIFICATION--' + '</li>');
-						}
-							
-						$("#app-status-ul").append('<li>MESSAGE -> MSG: ' + e.payload.message + '</li>');
-						$("#app-status-ul").append('<li>MESSAGE -> MSGCNT: ' + e.payload.msgcnt + '</li>');
-                    break;
-                    
-                    case 'error':
-						$("#app-status-ul").append('<li>ERROR -> MSG:' + e.msg + '</li>');
-                    break;
-                    
-                    default:
-						$("#app-status-ul").append('<li>EVENT -> Unknown, an event was received and we do not know what it is</li>');
-                    break;
-                }
-            }
 	
-Looking at the above message handling code for Android, a few things bear explaination. Your app may receive a notification while it is active (INLINE). If you background the app by hitting the Home button on your device, you may later receive a status bar notification. Selecting that notification from the status will bring your app to the front and allow you to process the notification (BACKGROUND). Finally, should you completely exit the app by hitting the back button from the home page, you may still receive a notification. Touching that notification in the notification tray will relaunch your app and allow you to process the notification (COLDSTART). In this case the **coldstart** flag will be set on the incoming event. You can look at the **foreground** flag on the event to determine whether you are processing a background or an in-line notification. You may choose, for example to play a sound or show a dialog only for inline or coldstart notifications since the user has already been alerted via the status bar.
-
-Also make note of the **payload** object. Since the Android notification data model is much more flexible than that of iOS, there may be additional elements beyond **message**, **soundname**, and **msgcnt**. You can access those elements and any additional ones via the **payload** element. This means that if your data model should change in the future, there will be no need to change and recompile the plugin.
 	
-#### unregister
+Looking at the above message handling code for Android, a few things bear explaination. Your app may receive a notification while it is active (INLINE). If you background the app by hitting the Home button on your device, you may later receive a status bar notification. Selecting that notification from the status will bring your app to the front and allow you to process the notification (BACKGROUND). Finally, should you completely exit the app by hitting the back button from the home page, you may still receive a notification. Touching that notification in the notification tray will relaunch your app and allow you to process the notification (COLDSTART). In this case the coldstart flag will be set on the incoming event. You can look at the foreground flag on the event to determine whether you are processing a background or an in-line notification. You may choose, for example to play a sound or show a dialog only for inline or coldstart notifications since the user has already been alerted via the status bar.
+
+Also make note of the payload object. Since the Android notification data model is much more flexible than that of iOS, there may be additional elements beyond message, soundname, and msgcnt. You can access those elements and any additional ones via the payload element. This means that if your data model should change in the future, there will be no need to change and recompile the plugin
+
+
+#### unregister(successCallback, errorCallback, options)
+
 You will typically call this when your app is exiting, to cleanup any used resources. Its not strictly necessary to call it, and indeed it may be desireable to NOT call it if you are debugging your intermediarry push server. When you call unregister(), the current token for a particular device will get invalidated, and the next call to register() will return a new token. If you do NOT call unregister(), the last token will remain in effect until it is invalidated for some reason at the GCM side. Since such invalidations are beyond your control, its recommended that, in a production environment, that you have a matching unregister() call, for every call to register(), and that your server updates the devices' records each time.
 
-	pushNotification.unregister(successHandler, errorHandler);
-	
-You'll probably want to trap on the **backbutton** event and only call this when the home page is showing. Remember, the back button on android is not the same as the Home button. When you hit the back button from the home page, your activity gets dismissed. Here is an example of how to trap the backbutton event;
+You'll probably want to trap on the backbutton event and only call this when the home page is showing. Remember, the back button on android is not the same as the Home button. When you hit the back button from the home page, your activity gets dismissed. Here is an example of how to trap the backbutton event;
 
-	function onDeviceReady() {
-		$("#app-status-ul").append('<li>deviceready event received</li>');
-                
-		document.addEventListener("backbutton", function(e)
-		{
-			$("#app-status-ul").append('<li>backbutton event received</li>');
-  					
-			if( $("#home").length > 0)
-			{
-				e.preventDefault();
-				pushNotification.unregister(successHandler, errorHandler);
-				navigator.app.exitApp();
-			}
-			else
-			{
-				navigator.app.backHistory();
-			}
-		}, false);
-			
-		// aditional onDeviceReady work…
+##### successCallback
+	function(result) {
+		console.log(result);
 	}
-For the above to work, make sure the content for your home page is wrapped in an element with an id of home, like this;
+##### errorCallback
+	function(error) { 
+		console.log(error);
+	}
+##### options
+#### setApplicationIconBadgeNumber(successCallback, errorCallback, badge) - IOS Only
 
-	<div id="home">
-		<div id="app-status-div">
-			<ul id="app-status-ul">
-				<li>Cordova PushNotification Plugin Demo</li>
-			</ul>
-		</div>
-	</div>
+Set the badge count visible when the app is not running.
 
-
-	
-#### setApplicationIconBadgeNumber (iOS only)
-set the badge count visible when the app is not running
-	
-	pushNotification.setApplicationIconBadgeNumber(successCallback, errorCallback, badgeCount);
-
-**badgeCount** -  an integer indicating what number should show up in the badge. Passing 0 will clear the badge.
+##### successCallback
+	function(result) {
+		console.log(result);
+	}
+##### errorCallback
+	function(error) { 
+		console.log(error);
+	}
+##### badge
+	true or false
 
 
 ## Test Environment
