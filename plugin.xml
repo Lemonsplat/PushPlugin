@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    id="com.plugin.gcm.PushPlugin"
+    id="com.lemonsplat.push.Push"
     version="2.0">
 	<name>PushPlugin</name>
 	<author>Bob Easterday, Krystian Kuczek</author>
@@ -14,38 +14,58 @@
 	<platform name="android">
 		<config-file target="res/xml/config.xml" parent="/widget">
 			<feature name="Push">
-				<param name="android-package" value="com.plugin.gcm.PushPlugin" />
+				<param name="android-package" value="com.lemonsplat.push.PushPlugin" />
 			</feature>
 		</config-file>
+
+		<js-module src="www/PushNotification.js" name="pushNotification">
+			<clobbers target="navigator.pushNotification" />
+		</js-module>
 		
-<!--		<config-file target="AndroidManifest.xml" parten="/manifest">
+-		<config-file target="AndroidManifest.xml" parent="/manifest">
 			<uses-permission android:name="android.permission.INTERNET" />
 			<uses-permission android:name="android.permission.GET_TASKS" />
-                        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-                        <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-                        <uses-permission android:name="android.permission.WAKE_LOCK" />
-                        <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+			<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+			<uses-permission android:name="android.permission.GET_ACCOUNTS" />
+			<uses-permission android:name="android.permission.WAKE_LOCK" />
+			<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
-                        <permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" android:protectionLevel="signature" />
-                        <uses-permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" />
+			<permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" android:protectionLevel="signature" />
+			<uses-permission android:name="$PACKAGE_NAME.permission.C2D_MESSAGE" />
 		</config-file>
 
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
-			<receiver android:name="com.plugin.gcm.CordovaGCMBroadcastReceiver" android:permission="com.google.android.c2dm.permission.RECEIVE">
+			<receiver android:name="com.lemonsplat.push.CordovaGCMBroadcastReceiver" android:permission="com.google.android.c2dm.permission.RECEIVE">
 				<intent-filter>
-                                        <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                                        <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-                                        <category android:name="$PACKAGE_NAME" />
+					<action android:name="com.google.android.c2dm.intent.RECEIVE" />
+					<action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+					<category android:name="$PACKAGE_NAME" />
 				</intent-filter>
-			</receiver>			
-			<service android:name="com.plugin.gcm.GCMIntentService" />
-		</config-file>-->
+			</receiver>
+			<service android:name="com.lemonsplat.push.GCMIntentService" />
+		</config-file>
 
-                <source-file src="src/android/gcm.jar" target-dir="libs/" />
-                <source-file src="src/android/CordovaGCMBroadcastReceiver.java" target-dir="src/com/plugin/gcm/" />
-                <source-file src="src/android/GCMIntentService.java" target-dir="src/com/plugin/gcm/" />
-                <source-file src="src/android/PushHandlerActivity.java" target-dir="src/com/plugin/gcm/" />
-                <source-file src="src/android/PushPlugin.java" target-dir="src/com/plugin/gcm/" />
-                <source-file src="src/android/android-support-v13.jar" target-dir="libs/" />
+		<source-file src="src/android/gcm.jar" target-dir="libs/" />
+		<source-file src="src/android/android-support-v13.jar" target-dir="libs/" />
+		<source-file src="src/android/CordovaGCMBroadcastReceiver.java" target-dir="src/com/lemonsplat/push/" />
+		<source-file src="src/android/GCMIntentService.java" target-dir="src/com/lemonsplat/push/" />
+		<source-file src="src/android/PushHandlerActivity.java" target-dir="src/com/lemonsplat/push/" />
+		<source-file src="src/android/PushPlugin.java" target-dir="src/com/lemonsplat/push/" />
+	</platform>
+	
+	<platform name="ios">
+		<js-module src="www/PushNotification.js" name="pushNotification">
+			<clobbers target="navigator.pushNotification" />
+		</js-module>
+		
+		<config-file target="config.xml" parent="/widget">
+			<plugin name="Push" value="Push"/>
+		</config-file>
+		
+		<source-file src="src/ios/AppDelegate+notification.m" />
+		<source-file src="src/ios/CDVPush.m" />
+        
+		<header-file src="src/ios/AppDelegate+notification.h" />
+		<header-file src="src/ios/CDVPush.h" />
 	</platform>
 </plugin>

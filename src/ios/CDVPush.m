@@ -23,9 +23,9 @@
  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "PushPlugin.h"
+#import "CDVPush.h"
 
-@implementation PushPlugin
+@implementation CDVPush
 
 @synthesize notificationMessage;
 @synthesize isInline;
@@ -87,7 +87,7 @@
     self.callback = [options objectForKey:@"ecb"];
 
     if (notificationTypes == UIRemoteNotificationTypeNone)
-        NSLog(@"PushPlugin.register: Push notification type is set to none");
+        NSLog(@"CDVPush.register: Push notification type is set to none");
 
     isInline = NO;
 
@@ -99,7 +99,7 @@
 
 - (void)isEnabled:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
     UIRemoteNotificationType type = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
-    NSString *jsStatement = [NSString stringWithFormat:@"navigator.PushPlugin.isEnabled = %d;", type != UIRemoteNotificationTypeNone];
+    NSString *jsStatement = [NSString stringWithFormat:@"navigator.Push.isEnabled = %d;", type != UIRemoteNotificationTypeNone];
     NSLog(@"JSStatement %@",jsStatement);
 }
 

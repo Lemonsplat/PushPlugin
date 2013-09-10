@@ -1,4 +1,4 @@
-package com.plugin.gcm;
+package com.lemonsplat.push;
 
 import java.util.Iterator;
 
@@ -18,6 +18,7 @@ import com.google.android.gcm.*;
 
 /**
  * @author awysocki
+ * @author Krystian Kuczek <krystian@kuczek.eu>
  */
 
 public class PushPlugin extends CordovaPlugin {

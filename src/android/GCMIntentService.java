@@ -1,4 +1,4 @@
-package com.plugin.gcm;
+package com.lemonsplat.push;
 
 import java.util.List;
 
