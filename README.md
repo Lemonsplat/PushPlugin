@@ -1,6 +1,5 @@
 # Cordova Push Notifications Plugin for Android and iOS
 
----
 
 ## DESCRIPTION
 
