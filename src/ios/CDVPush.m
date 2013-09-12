@@ -30,62 +30,41 @@
 @synthesize notificationMessage;
 @synthesize isInline;
 
-@synthesize callbackId;
 @synthesize notificationCallbackId;
 @synthesize callback;
+@synthesize callbackId;
 
-- (void)dealloc
-{
-    [notificationMessage release];
-    self.notificationCallbackId = nil;
-    self.callback = nil;
 
-    [super dealloc];
-}
-
-- (void)unregister:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options
-{
-	self.callbackId = [arguments pop];
+//Fixed for 3.0
+- (void)unregister:(CDVInvokedUrlCommand*)command{
+    NSString* callbackId = command.callbackId;
 
     [[UIApplication sharedApplication] unregisterForRemoteNotifications];
-    [self successWithMessage:@"unregistered"];
+    
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"unregistered"];
+    
+    [self.commandDelegate sendPluginResult:result callbackId:callbackId];
 }
 
-- (void)register:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options
-{
-	self.callbackId = [arguments pop];
+- (void)register:(CDVInvokedUrlCommand*)command{
+	self.callbackId = command.callbackId;
 
     UIRemoteNotificationType notificationTypes = UIRemoteNotificationTypeNone;
-    id badgeArg = [options objectForKey:@"badge"];
-    id soundArg = [options objectForKey:@"sound"];
-    id alertArg = [options objectForKey:@"alert"];
+    BOOL badgeArg = [[command.arguments objectAtIndex:1] boolValue];
+    BOOL soundArg = [[command.arguments objectAtIndex:2] boolValue];
+    BOOL alertArg = [[command.arguments objectAtIndex:3] boolValue];
     
-    if ([badgeArg isKindOfClass:[NSString class]])
-    {
-        if ([badgeArg isEqualToString:@"true"])
-            notificationTypes |= UIRemoteNotificationTypeBadge;
-    }
-    else if ([badgeArg boolValue])
+    if (badgeArg)
         notificationTypes |= UIRemoteNotificationTypeBadge;
     
-    if ([soundArg isKindOfClass:[NSString class]])
-    {
-        if ([soundArg isEqualToString:@"true"])
-            notificationTypes |= UIRemoteNotificationTypeSound;
-    }
-    else if ([soundArg boolValue])
+    if (soundArg)
         notificationTypes |= UIRemoteNotificationTypeSound;
     
-    if ([alertArg isKindOfClass:[NSString class]])
-    {
-        if ([alertArg isEqualToString:@"true"])
-            notificationTypes |= UIRemoteNotificationTypeAlert;
-    }
-    else if ([alertArg boolValue])
+    if (alertArg)
         notificationTypes |= UIRemoteNotificationTypeAlert;
     
-    self.callback = [options objectForKey:@"ecb"];
-
+    self.callback = [command.arguments objectAtIndex:5];
+    
     if (notificationTypes == UIRemoteNotificationTypeNone)
         NSLog(@"CDVPush.register: Push notification type is set to none");
 
@@ -103,8 +82,15 @@
     NSLog(@"JSStatement %@",jsStatement);
 }
 
-- (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+/*- (void)application:(UIApplication *)app didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+    
+    NSString *token = [[deviceToken description] stringByTrimmingCharactersInSet:      [NSCharacterSet characterSetWithCharactersInString:@"<>"]];
+    token = [token stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSLog(@"content---%@", token);
+}*/
 
+- (void)application:(UIApplication *)app didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
     NSMutableDictionary *results = [NSMutableDictionary dictionary];
     NSString *token = [[[[deviceToken description] stringByReplacingOccurrencesOfString:@"<"withString:@""]
                         stringByReplacingOccurrencesOfString:@">" withString:@""]
@@ -165,13 +151,21 @@
         [results setValue:dev.model forKey:@"deviceModel"];
         [results setValue:dev.systemVersion forKey:@"deviceSystemVersion"];
 
-		[self successWithMessage:[NSString stringWithFormat:@"%@", token]];
-    #endif
+//		[self successWithMessage:[NSString stringWithFormat:@"%@", token]];
+#endif
+    
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:results];
+    
+    [self.commandDelegate sendPluginResult:result callbackId:self.callbackId];
 }
 
 - (void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
 {
-	[self failWithMessage:@"" withError:error];
+    NSString* err = error.description;
+    
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:err];
+    
+    [self.commandDelegate sendPluginResult:result callbackId:self.callbackId];
 }
 
 - (void)notificationReceived {
@@ -219,30 +213,19 @@
     }
 }
 
-- (void)setApplicationIconBadgeNumber:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
-	DLog(@"setApplicationIconBadgeNumber:%@\n withDict:%@", arguments, options);
+- (void)setApplicationIconBadgeNumber:(CDVInvokedUrlCommand *)command {
     
-	self.callbackId = [arguments pop];
+    NSString *callbackId;
     
-    int badge = [[options objectForKey:@"badge"] intValue] ?: 0;
+    callbackId = command.callbackId;
+    
+    int badge = [[command.arguments objectAtIndex:0] intValue] ?: 0;
+                  
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:badge];
-    
-    [self successWithMessage:[NSString stringWithFormat:@"app badge count set to %d", badge]];
-}
-
--(void)successWithMessage:(NSString *)message
-{
-    CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
-    
-    [self writeJavascript:[commandResult toSuccessCallbackString:self.callbackId]];
-}
-
--(void)failWithMessage:(NSString *)message withError:(NSError *)error
-{
-    NSString        *errorMessage = (error) ? [NSString stringWithFormat:@"%@ - %@", message, [error localizedDescription]] : message;
-    CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMessage];
-    
-    [self writeJavascript:[commandResult toErrorCallbackString:self.callbackId]];
+                  
+                  CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[NSString stringWithFormat:@"app badge count set to %d", badge]];
+                  
+                  [self.commandDelegate sendPluginResult:result callbackId:callbackId];
 }
 
 @end
